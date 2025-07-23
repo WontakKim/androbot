@@ -35,7 +35,7 @@ def get_occluded_indices(box: Union[List[List[float]], np.ndarray], drawing_orde
     np.fill_diagonal(contains, False)
 
     # broadcasting
-    order_i, order_j = drawing_order[:, np.newaxis] # [n, 1]
+    order_i = drawing_order[:, np.newaxis] # [n, 1]
     order_j = drawing_order[np.newaxis, :]  # [1, n]
 
     order = order_i > order_j
