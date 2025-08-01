@@ -1,14 +1,12 @@
-import json
 from typing import List, Tuple
 from xml.etree import ElementTree
 
-from server.route.appium.data.som import SOM
-from server.route.appium.screen.ui_element import UiElement, from_xml_element
-from server.route.appium.util.box_utils import get_occluded_indices
+from ..data.som import SOM
+from ..screen.ui_element import UiElement, from_xml_element
+from ..util.box_utils import get_occluded_indices
 
 
 class Screen:
-
     def __init__(self, xml_string: str):
         self.xml_string = xml_string
 
@@ -39,40 +37,49 @@ def minify(screen: Screen) -> List[SOM]:
         to_return_concats = []
         to_return_soms = []
 
-        indents = '\t' * depth
-
-        print(f'{indents}{element.class_name.split('.')[-1]}({element.index}): {element.bounds}, {element.drawing_order} [{element.text}]')
-
         children = element.children
 
         if children:
             # remove occluded children
             (bounds, drawing_orders) = zip(*[(child.bounds, child.drawing_order) for child in element.children])
-            # (bounds, drawing_orders) = zip(*(child.bounds, child.drawing_order) for child in element.children)
             occluded_indices = set(get_occluded_indices(bounds, drawing_orders))
-
-            for i, child in enumerate(element.children):
-                print(f'{indents}|--- {child.class_name.split('.')[-1]}({child.index}): {child.bounds}, {child.drawing_order} {'# REMOVED' if i in occluded_indices else ''}')
 
             for i, child in enumerate(element.children):
                 if i in occluded_indices:
                     continue
 
-                (concats, soms) = _minify(child, depth=depth + 1)
+                (concats, soms) = _minify(child, depth=depth+1)
                 to_return_concats.extend(concats)
                 to_return_soms.extend(soms)
 
         if element.is_meaningful:
-            texts = [item.text for item in to_return_concats]
-            som = SOM(
-                # enabled=element.enabled,
-                bounds=element.bounds,
-                interactive=element.is_interactive,
-                content='|'.join(texts),
-            )
+            # sanitize
+            to_return_concats.insert(0, element)
+            to_return_concats = [item for item in to_return_concats if item.text.strip()]
+
+            if element.is_scrollable:
+                soms = [SOM(
+                    bounds=item.bounds,
+                    interactive=item.is_interactive,
+                    clickable=item.clickable,
+                    scrollable=item.is_scrollable,
+                    content=item.text,
+                    selected=item.selected,
+                ) for item in to_return_concats if item.text.strip()]
+            else:
+                concat_text = '|'.join(item.text.strip() for item in to_return_concats)
+                soms = [SOM(
+                    bounds=element.bounds,
+                    interactive=element.is_interactive,
+                    clickable=element.clickable,
+                    scrollable=element.scrollable,
+                    content=concat_text,
+                    selected=element.selected
+                )]
+
             to_return_concats.clear()
-            to_return_soms.insert(0, som)
-        else:
+            to_return_soms = soms + to_return_soms
+        elif element.text.strip():
             to_return_concats.insert(0, element)
 
         return to_return_concats, to_return_soms

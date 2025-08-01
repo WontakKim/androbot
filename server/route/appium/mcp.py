@@ -1,6 +1,6 @@
 from fastmcp import FastMCP
 
-from .client.client import AppiumClient
+from .client import AppiumClient
 from .util.utils import execute_command
 
 mcp = FastMCP('appium')
@@ -66,4 +66,52 @@ def activate_app(package_name: str) -> str:
         execution result
     """
     client.activate_app(package_name)
+    return 'ok'
+
+@mcp.tool()
+def get_current_screen_info() -> str:
+    """
+    Get current screen layout information
+
+    Returns:
+        screen layout in format `type@x1,y1,x2,y2:content` where:
+            - type: element type - `button`(clickable), `scroll`(scrollable), `view`(display only)
+            - x1,y1,x2,y2: bounding box coordinates
+            - content: text content(empty if no content)
+
+            elements are separated by semicolons(;)
+    """
+    return client.get_current_screen_llm_string()
+
+@mcp.tool()
+def tap_x_y(x: int, y: int) -> str:
+    """
+    Tap `x` and `y`
+
+    Args:
+        x (int): x coordinate
+        y (int): y coordinate
+
+    Returns:
+        execution result
+    """
+    client.tap_x_y(x, y)
+    return 'ok'
+
+@mcp.tool()
+def swipe(start_x: int, start_y: int, end_x: int, end_y: int, duration_ms: int) -> str:
+    """
+    Swipe `start_x` and `start_y` to `end_x` and `end_y`
+
+    Args:
+        start_x (int): start x coordinate
+        start_y (int): start y coordinate
+        end_x (int): end x coordinate
+        end_y (int): end y coordinate
+        duration_ms (int): duration in milliseconds
+
+    Returns:
+        execution result
+    """
+    client.swipe(start_x, start_y, end_x, end_y, duration_ms)
     return 'ok'

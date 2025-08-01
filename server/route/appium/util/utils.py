@@ -5,7 +5,7 @@ import numpy as np
 import supervision as sv
 from PIL import Image
 
-from server.route.appium.util.box_annotator import BoxAnnotator
+from ..util.box_annotator import BoxAnnotator
 
 
 def execute_command(command: str) -> str:

@@ -28,24 +28,28 @@ class UiElement(BaseModel):
     @property
     def is_meaningful(self):
         return self.displayed and (
-            self.clickable or self.selected or
-            self.scrollable or
-            # React native bottom sheet
-            self.class_name == 'android.widget.SeekBar'
+            self.is_clickable or
+            self.is_scrollable
         )
 
     @property
-    def is_interactive(self) -> bool:
+    def is_clickable(self):
+        return self.clickable or self.selected
+
+    @property
+    def is_scrollable(self):
         return (
-            self.clickable or
             self.scrollable or
             # React native bottom sheet
             'SeekBar' in self.class_name
         )
 
-    def is_visible(self):
+    @property
+    def is_interactive(self) -> bool:
+        return self.clickable or self.is_scrollable
 
-        return
+    def is_visible(self) -> bool:
+        return self.displayed
 
     def to_llm_string(self) -> str:
         return self._to_llm_string()
